@@ -1,0 +1,34 @@
+name: Sync fork with upstream
+
+# 自动把本 fork 与上游 EthanYoQ/whisper-input 保持同步。
+# - 每天 UTC 03:00（北京时间 11:00）定时 fast-forward；
+# - 也支持在 Actions 页面手动 "Run workflow" 立即触发。
+# 仅 fast-forward：若 fork 有本地提交或与上游分叉，任务会失败并提醒你手动 rebase，
+# 而不会悄悄产生混乱的 merge commit。
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+
+# 允许 GITHUB_TOKEN 推回本 fork
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync upstream (fast-forward only)
+        env:
+          UPSTREAM: https://github.com/EthanYoQ/whisper-input.git
+        run: |
+          git remote add upstream "$UPSTREAM"
+          git fetch upstream main
+          git merge --ff-only upstream/main
+          git push origin main
